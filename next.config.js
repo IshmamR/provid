@@ -1,6 +1,17 @@
+/* eslint-disable */
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-}
+const withAntdLess = require("next-plugin-antd-less");
+const path = require("path");
 
-module.exports = nextConfig
+console.log(path.resolve("./src/assets/styles/antd-theme.less"));
+
+module.exports = withAntdLess({
+  lessVarsFilePath: "./src/assets/styles/antd-theme.less",
+  lessVarsFilePathAppendToEndOfContent: true,
+
+  // Other Config Here...
+  javascriptEnabled: true,
+  webpack(config) {
+    return config;
+  },
+});
