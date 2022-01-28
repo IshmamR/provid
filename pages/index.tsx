@@ -1,5 +1,6 @@
 import type { NextPage } from "next";
 import Head from "next/head";
+import App from "../src/components/app";
 import styles from "../styles/Home.module.css";
 
 const Home: NextPage = () => {
@@ -12,7 +13,7 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
-        <h1>Hello from provid</h1>
+        <App />
       </main>
 
       <footer className={styles.footer}>Powered by Promethewz</footer>
