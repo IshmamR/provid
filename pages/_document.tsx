@@ -34,9 +34,7 @@ class MyDocument extends Document {
   render() {
     return (
       <Html translate="no">
-        <Head>
-          <title>PROVID</title>
-        </Head>
+        <Head>{/*  */}</Head>
         <body>
           <Main />
           <NextScript />
