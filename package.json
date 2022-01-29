@@ -2,6 +2,7 @@
   "name": "provid",
   "description": "ProVid from Promethewz",
   "author": "IshmamR",
+  "license": "MIT",
   "main": "build/server/index.js",
   "private": false,
   "scripts": {

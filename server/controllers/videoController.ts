@@ -102,13 +102,12 @@ const downloadVideo = (res: Response, url: string, quality?: number) => {
       (f: any) => ["720p", "1080p"].includes(f.format_note) && f.asr !== null
     );
     if (hdFormat) iTag = hdFormat.format_id;
-    console.log(iTag);
 
     const video = ytdl(
       url,
       [
         `--format=${iTag}`,
-        "--http-chunk-size=10M",
+        "--buffer-size=3M",
         // `--proxy=https://provid22.herokuapp.com:${process.env.PORT}`,
       ],
       { cwd: __dirname }
