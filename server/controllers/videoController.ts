@@ -22,12 +22,12 @@ const getVideoInfo = async (req: Request, res: Response) => {
  * @route /video/download
  * @return download media
  */
-const downloadMedia = async (req: Request, res: Response) => {
+const downloadMedia = (req: Request, res: Response) => {
   const { url, format, quality } = req.body;
   switch (format) {
     case "video":
       downloadVideo(res, url, quality);
-      return;
+      break;
 
     case "audio":
       downloadAudio(res, url);
@@ -84,46 +84,63 @@ const streamMedia = async (req: Request, res: Response) => {
     console.error("Video stream error: " + err);
   });
 
-  return pipeline(video, res, (error) => {
+  pipeline(video, res, (error) => {
     if (error) console.error("Pipeline error(Video): " + error);
   });
 };
 
 /* __ Starts mp4 download __ */
 const downloadVideo = (res: Response, url: string, quality?: number) => {
-  const iTag = quality ?? 18;
-  const video = ytdl(url, [`--format=${iTag}`, "--http-chunk-size=10M"], {
-    cwd: __dirname,
-  });
+  let iTag = quality ?? 18;
 
-  video.on("info", (info) => {
-    console.log("Video download started");
-    res.status(200);
-    res.set("content-length", `${info.size}`);
-    res.set("content-type", "video/mp4");
-    res.attachment(info._filename);
-  });
-  video.on("data", (_data) => {
-    // console.log("\x1b[31m", "Chunk size = " + data.length, "\x1b[0m");
-  });
-  video.on("end", () => {
-    console.log("END");
-  });
-  video.on("complete", () => {
-    console.log("Complete");
-  });
-  video.on("finish", () => {
-    console.log("Finish");
-  });
-  video.on("next", (data) => {
-    console.log("NEXT: " + data);
-  });
-  video.on("error", (err) => {
-    console.error("Video stream error: " + err);
-  });
+  ytdl.getInfo(url, (err, info: any) => {
+    if (err) {
+      console.log("Video info error: " + err);
+      return res.status(404).json({ message: "Info not found" });
+    }
+    const hdFormat = info.formats.find(
+      (f: any) => ["720p", "1080p"].includes(f.format_note) && f.asr !== null
+    );
+    if (hdFormat) iTag = hdFormat.format_id;
+    console.log(iTag);
 
-  return pipeline(video, res, (error) => {
-    if (error) console.error("Pipeline error(Stream): " + error);
+    const video = ytdl(
+      url,
+      [
+        `--format=${iTag}`,
+        "--http-chunk-size=10M",
+        // `--proxy=https://provid22.herokuapp.com:${process.env.PORT}`,
+      ],
+      { cwd: __dirname }
+    );
+
+    video.on("info", (info: any) => {
+      console.log("Video download started");
+      res.status(200);
+      res.set("content-length", `${info.size}`);
+      res.set("content-type", "video/mp4");
+      res.attachment(info._filename);
+    });
+    video.on("data", () => {
+      // console.log("\x1b[31m", "Chunk size = " + data.length, "\x1b[0m");
+    });
+    video.on("end", () => {
+      console.log("END");
+    });
+    video.on("complete", () => {
+      console.log("Complete");
+    });
+    video.on("next", (data: any) => {
+      console.log("NEXT: " + data);
+    });
+    video.on("error", (err: any) => {
+      console.error("Video stream error: " + err);
+    });
+
+    return pipeline(video, res, (error) => {
+      if (error) console.error("Pipeline error(Stream): " + error);
+      else console.log("Download success");
+    });
   });
 };
 
@@ -149,8 +166,8 @@ const downloadAudio = (res: Response, url: string) => {
 
   audio.on("info", (info) => {
     console.log(info._filename + "download started");
-    const audioName = info._filename || "audio.mp3";
-    res.status(200).attachment(audioName);
+    const audioName = info._filename.slice(0, info._filename.length - 4);
+    res.status(200).attachment(audioName + ".mp3");
     // res.set("content-type", "audio/mpeg");
     // res.set("accept-ranges", "bytes");
   });

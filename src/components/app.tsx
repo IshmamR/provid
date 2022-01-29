@@ -166,7 +166,7 @@ function App(props: IProps): JSX.Element {
     format: "video",
     quality: undefined,
   });
-  const [hdFormat, setHdFormat] = useState<any>();
+  // const [hdFormat, setHdFormat] = useState<any>();
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const inputRef = useRef<Input>(null);
@@ -204,10 +204,6 @@ function App(props: IProps): JSX.Element {
       .then((res) => res.json())
       .then((data: any) => {
         setInfo(data);
-        const hdFormat = data.formats.find(
-          (f: any) => f.format_note === "720p"
-        );
-        setHdFormat(hdFormat);
       })
       // eslint-disable-next-line no-console
       .catch((err) => console.log(err))
@@ -291,7 +287,7 @@ function App(props: IProps): JSX.Element {
         <DownloadForm
           method="POST"
           action="/api/video/download"
-          target="hiddenFrame"
+          // target="hiddenFrame"
         >
           <input
             name="url"
@@ -315,24 +311,7 @@ function App(props: IProps): JSX.Element {
             </Radio>
           </Radio.Group>
           <h3>Quality</h3>
-          <Radio.Group
-            name="quality"
-            value={downloadQuery.quality}
-            onChange={(e) =>
-              setDownloadQuery((prev) => ({ ...prev, quality: e.target.value }))
-            }
-            disabled={downloadQuery.format === "audio"}
-          >
-            <Radio
-              disabled={!hdFormat}
-              value={parseInt(hdFormat?.format_id?.toString() ?? "")}
-            >
-              <p>High (720p HD)</p>
-            </Radio>
-            <Radio value={18}>
-              <p>Low</p>
-            </Radio>
-          </Radio.Group>
+          <p>*functionality coming soon</p>
           <DownloadButton
             size="large"
             icon={<DownloadOutlined />}
