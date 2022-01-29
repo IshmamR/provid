@@ -11,6 +11,9 @@ module.exports = withAntdLess({
 
   // Other Config Here...
   javascriptEnabled: true,
+  images: {
+    domains: ["i.ytimg.com"],
+  },
   webpack(config) {
     return config;
   },

@@ -90,9 +90,9 @@ const streamMedia = async (req: Request, res: Response) => {
 };
 
 /* __ Starts mp4 download __ */
-const downloadVideo = (res: Response, url: string, quality?: string) => {
-  const iTag = quality === "high" ? 22 : 18;
-  const video = ytdl(url, [`--format=${iTag}`, "--http-chunk-size=7M"], {
+const downloadVideo = (res: Response, url: string, quality?: number) => {
+  const iTag = quality ?? 18;
+  const video = ytdl(url, [`--format=${iTag}`, "--http-chunk-size=10M"], {
     cwd: __dirname,
   });
 
@@ -103,14 +103,17 @@ const downloadVideo = (res: Response, url: string, quality?: string) => {
     res.set("content-type", "video/mp4");
     res.attachment(info._filename);
   });
-  video.on("data", () => {
-    // console.log("Chunk size = " + _data.length);
+  video.on("data", (_data) => {
+    // console.log("\x1b[31m", "Chunk size = " + data.length, "\x1b[0m");
   });
   video.on("end", () => {
     console.log("END");
   });
   video.on("complete", () => {
     console.log("Complete");
+  });
+  video.on("finish", () => {
+    console.log("Finish");
   });
   video.on("next", (data) => {
     console.log("NEXT: " + data);
@@ -146,8 +149,8 @@ const downloadAudio = (res: Response, url: string) => {
 
   audio.on("info", (info) => {
     console.log(info._filename + "download started");
-    const audioName = info._filename.slice(0, info._filename.length - 4);
-    res.status(200).attachment(audioName + ".mp3");
+    const audioName = info._filename || "audio.mp3";
+    res.status(200).attachment(audioName);
     // res.set("content-type", "audio/mpeg");
     // res.set("accept-ranges", "bytes");
   });

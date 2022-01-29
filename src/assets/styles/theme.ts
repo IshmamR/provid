@@ -6,13 +6,14 @@ export const theme = {
       dark: "#E7272D",
     },
     secondary: {
-      main: "#F5F5F5",
+      main: "#274690",
       light: "#D9D9D9",
       dark: "",
     },
 
     body: "#F9F8FF",
     background: "#FFFFFF",
+    black: "000000",
     highlight: "#EF555C",
 
     text: {
