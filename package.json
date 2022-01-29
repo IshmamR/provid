@@ -13,7 +13,7 @@
     "build:server": "tsc --project tsconfig.server.json",
     "build:next": "next build",
     "build": "yarn clean && yarn run build:next && yarn run build:server",
-    "start": "NODE_ENV=production node build/index.js",
+    "start": "NODE_ENV=production node build/index.js -p $PORT",
     "type-check": "tsc --pretty --noEmit",
     "format": "prettier --write \"**/*.{js,ts,tsx}\"",
     "lint": "eslint . --ext ts --ext tsx --ext js"
@@ -53,5 +53,6 @@
     "prettier": "^2.5.1",
     "ts-node": "^10.4.0",
     "typescript": "4.5.5"
-  }
+  },
+  "cacheDirectories": [".next/cache"]
 }
