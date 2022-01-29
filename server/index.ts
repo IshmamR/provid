@@ -30,6 +30,16 @@ server.use((_req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+// force redirect to ssl (https)
+server.get("*", (req: Request, res: Response, next: NextFunction) => {
+  if (
+    process.env.NODE_ENV === "production" &&
+    req.headers["x-forwarded-proto"] != "https"
+  ) {
+    res.redirect(`https://${req.get("Host")}${req.url}`);
+  } else next(); /* Continue to other routes if already https */
+});
+
 // api routes
 server.use("/api/video", videoRouter);
 
