@@ -110,7 +110,8 @@ const downloadVideo = (res: Response, url: string, quality?: number) => {
         "--buffer-size=3M",
         // `--proxy=https://provid22.herokuapp.com:${process.env.PORT}`,
       ],
-      { cwd: __dirname }
+      // { cwd: __dirname },
+      {}
     );
 
     video.on("info", (info: any) => {
@@ -160,7 +161,8 @@ const downloadAudio = (res: Response, url: string) => {
       // ffmpeg.path,
       // "--proxy", `${url}/:${port}`
     ],
-    { cwd: __dirname }
+    // { cwd: __dirname }
+    {}
   );
 
   audio.on("info", (info) => {
