@@ -33,8 +33,8 @@ class MyDocument extends Document {
 
   render() {
     return (
-      <Html translate="no">
-        <Head>{/*  */}</Head>
+      <Html lang="en" translate="no">
+        <Head />
         <body>
           <Main />
           <NextScript />

@@ -5,6 +5,7 @@ import next from "next";
 import express, { NextFunction, Request, Response } from "express";
 import errorHandler from "./middlewares/errorHandler";
 import videoRouter from "./routes/video";
+import getClientIp from "./utils/getClientIp";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -45,6 +46,11 @@ server.get("*", (req: Request, res: Response, next: NextFunction) => {
 
 // api routes
 server.use("/api/video", videoRouter);
+
+server.get("/ip", (req: Request, res: Response) => {
+  res.json(getClientIp(req));
+  // res.json(req.headers["x-forwarded-for"]);
+});
 
 server.get("/ping", (_req: Request, res: Response) => {
   res.status(200).json("pong");

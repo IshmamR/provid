@@ -159,6 +159,8 @@ interface IVideoInfo {
   webpage_url: string;
   fulltitle: string;
   _filename: string;
+  categories: string[];
+  tags: string[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
