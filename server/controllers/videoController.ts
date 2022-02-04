@@ -80,7 +80,7 @@ const streamMedia = async (req: Request, res: Response) => {
   video.on("next", (data) => {
     logger("NEXT: " + data);
   });
-  video.on("error", (err) => {
+  video.on("error", (err: Error) => {
     logger(`Video stream error: ${err}`, "error");
   });
 
@@ -121,7 +121,8 @@ const downloadVideo = (res: Response, url: string, iTag = 18) => {
   video.on("next", (data: any) => {
     logger("NEXT: " + data);
   });
-  video.on("error", (err: any) => {
+  video.on("error", (err: Error) => {
+    // messages = "Premature close" | "ESOCKETTIMEDOUT"
     logger("Video stream error: " + err, "error");
   });
 
@@ -171,7 +172,7 @@ const downloadAudio = (res: Response, url: string) => {
   audio.on("next", (data) => {
     logger("NEXT: " + data);
   });
-  audio.on("error", (err) => {
+  audio.on("error", (err: Error) => {
     logger("Audio stream error: " + err, "error");
   });
 
