@@ -5,7 +5,15 @@ import next from "next";
 import express, { NextFunction, Request, Response } from "express";
 import errorHandler from "./middlewares/errorHandler";
 import videoRouter from "./routes/video";
-import getClientIp from "./utils/getClientIp";
+import config from "./utils/config";
+import logger from "./utils/logger";
+import createCon from "./db/connection";
+// import getClientIp from "./utils/getClientIp";
+
+createCon(config.DB_URI).catch((err) => {
+  logger(err, "error");
+  process.exit(1);
+});
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -48,8 +56,21 @@ server.get("*", (req: Request, res: Response, next: NextFunction) => {
 server.use("/api/video", videoRouter);
 
 server.get("/ip", (req: Request, res: Response) => {
-  res.json(getClientIp(req));
-  // res.json(req.headers["x-forwarded-for"]);
+  const obj = {
+    ip: req.ip,
+    ips: req.ips,
+    headers: req.headers,
+    rawHeaders: req.rawHeaders,
+    remoteAddress: req.socket.remoteAddress,
+    localAddress: req.socket.localAddress,
+    rawTrailers: req.rawTrailers,
+    httpVersion: [req.httpVersionMinor, req.httpVersion, req.httpVersionMajor],
+    protocol: req.protocol,
+    trailers: req.trailers,
+    xhr: req.xhr,
+  };
+  // res.json(getClientIp(req));
+  res.json(obj);
 });
 
 server.get("/ping", (_req: Request, res: Response) => {
@@ -64,8 +85,7 @@ app
     });
   })
   .catch((err: any) => {
-    // eslint-disable-next-line no-console
-    console.error(err);
+    logger(err, "error");
     process.exit(1);
   });
 
@@ -73,13 +93,6 @@ server.use(errorHandler);
 
 export default server;
 
-const port = process.env.PORT || 5000;
-server.listen(port, () => {
-  // eslint-disable-next-line no-console
-  console.log(
-    "\x1b[46m",
-    "\x1b[31m",
-    `provid server listening on ${port}`,
-    "\x1b[0m"
-  );
+server.listen(config.PORT, () => {
+  logger(`provid server listening on ${config.PORT}`, "important");
 });

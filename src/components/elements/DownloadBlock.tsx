@@ -158,6 +158,7 @@ interface IVideoInfo {
   url: string;
   webpage_url: string;
   fulltitle: string;
+  formats: any[];
   _filename: string;
   categories: string[];
   tags: string[];
@@ -178,7 +179,7 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
     format: "video",
     quality: undefined,
   });
-  // const [hdFormat, setHdFormat] = useState<any>();
+  const [iTag, setITag] = useState<number>(18);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const inputRef = useRef<Input>(null);
@@ -212,10 +213,18 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
       setInfoLoading(false);
       return;
     }
+
     fetch(`/api/video/info?url=${url}`)
       .then((res) => res.json())
-      .then((data: any) => {
+      .then((data: IVideoInfo) => {
         setInfo(data);
+        const hdFormat = data.formats.find(
+          (f: any) =>
+            ["720p", "1080p"].includes(f.format_note) && f.asr !== null
+        );
+        if (hdFormat) {
+          setITag(hdFormat.format_id);
+        }
       })
       // eslint-disable-next-line no-console
       .catch((err) => console.log(err))
@@ -252,7 +261,7 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
         </SubmitButton>
       </Form>
       <Writing1>
-        {"Copy & paste your chosen youtube video url and click `Download`!"}
+        {"Submit your chosen youtube video url and click `Download`!"}
       </Writing1>
 
       <VideoBox style={{ display: info ? "grid" : "none" }}>
@@ -328,6 +337,12 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
             </Radio>
           </Radio.Group>
           <h3>Quality</h3>
+          <input
+            style={{ display: "none" }}
+            name="iTag"
+            value={iTag}
+            readOnly
+          />
           <p>*functionality coming soon</p>
           <DownloadButton
             size="large"

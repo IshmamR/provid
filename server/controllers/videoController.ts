@@ -1,7 +1,7 @@
-/* eslint-disable no-console */
 import { Request, Response } from "express";
 import { pipeline } from "stream";
 import ytdl from "youtube-dl";
+import logger from "../utils/logger";
 
 /**
  * @route /video/info?url={string}
@@ -11,7 +11,7 @@ const getVideoInfo = async (req: Request, res: Response) => {
   const url = req.query.url as string;
   ytdl.getInfo(url, (err, info) => {
     if (err) {
-      console.log("Video info error: " + err);
+      logger(`Video info error: ${err}`, "error");
       return res.status(404).json({ message: "Info not found" });
     }
     return res.status(200).json(info);
@@ -47,7 +47,7 @@ const streamMedia = async (req: Request, res: Response) => {
   const videoRange = req.headers.range;
 
   video.on("info", (info) => {
-    console.log("Streaming started");
+    logger("Streaming started");
     if (videoRange) {
       const parts = videoRange.replace(/bytes=/, "").split("-");
       const start = parseInt(parts[0], 10);
@@ -72,75 +72,62 @@ const streamMedia = async (req: Request, res: Response) => {
     // console.log("Chunk size = " + _data.length);
   });
   video.on("end", () => {
-    console.log("END");
+    logger("END");
   });
   video.on("complete", () => {
-    console.log("Complete");
+    logger("Complete");
   });
   video.on("next", (data) => {
-    console.log("NEXT: " + data);
+    logger("NEXT: " + data);
   });
   video.on("error", (err) => {
-    console.error("Video stream error: " + err);
+    logger(`Video stream error: ${err}`, "error");
   });
 
   pipeline(video, res, (error) => {
-    if (error) console.error("Pipeline error(Video): " + error);
+    if (error) logger(`Pipeline error(Video): ${error}`, "error");
   });
 };
 
 /* __ Starts mp4 download __ */
-const downloadVideo = (res: Response, url: string, quality?: number) => {
-  let iTag = quality ?? 18;
+const downloadVideo = (res: Response, url: string, iTag = 18) => {
+  const video = ytdl(
+    url,
+    [
+      `--format=${iTag}`,
+      "--buffer-size=3M",
+      // `--proxy=https://provid22.herokuapp.com:${process.env.PORT}`,
+    ],
+    // { cwd: __dirname },
+    {}
+  );
 
-  ytdl.getInfo(url, (err, info: any) => {
-    if (err) {
-      console.log("Video info error: " + err);
-      return res.status(404).json({ message: "Info not found" });
-    }
-    const hdFormat = info.formats.find(
-      (f: any) => ["720p", "1080p"].includes(f.format_note) && f.asr !== null
-    );
-    if (hdFormat) iTag = hdFormat.format_id;
+  video.on("info", (info: any) => {
+    logger("Video download started");
+    res.status(200);
+    res.set("content-length", `${info.size}`);
+    res.set("content-type", "video/mp4");
+    res.attachment(info._filename);
+  });
+  video.on("data", () => {
+    // logger("\x1b[31m", "Chunk size = " + data.length, "\x1b[0m");
+  });
+  video.on("end", () => {
+    logger("END");
+  });
+  video.on("complete", () => {
+    logger("Complete");
+  });
+  video.on("next", (data: any) => {
+    logger("NEXT: " + data);
+  });
+  video.on("error", (err: any) => {
+    logger("Video stream error: " + err, "error");
+  });
 
-    const video = ytdl(
-      url,
-      [
-        `--format=${iTag}`,
-        "--buffer-size=3M",
-        // `--proxy=https://provid22.herokuapp.com:${process.env.PORT}`,
-      ],
-      // { cwd: __dirname },
-      {}
-    );
-
-    video.on("info", (info: any) => {
-      console.log("Video download started");
-      res.status(200);
-      res.set("content-length", `${info.size}`);
-      res.set("content-type", "video/mp4");
-      res.attachment(info._filename);
-    });
-    video.on("data", () => {
-      // console.log("\x1b[31m", "Chunk size = " + data.length, "\x1b[0m");
-    });
-    video.on("end", () => {
-      console.log("END");
-    });
-    video.on("complete", () => {
-      console.log("Complete");
-    });
-    video.on("next", (data: any) => {
-      console.log("NEXT: " + data);
-    });
-    video.on("error", (err: any) => {
-      console.error("Video stream error: " + err);
-    });
-
-    return pipeline(video, res, (error) => {
-      if (error) console.error("Pipeline error(Stream): " + error);
-      else console.log("Download success");
-    });
+  return pipeline(video, res, (error) => {
+    if (error) logger("Pipeline error(Stream): " + error, "error");
+    else logger("Download success", "success");
   });
 };
 
@@ -166,7 +153,7 @@ const downloadAudio = (res: Response, url: string) => {
   );
 
   audio.on("info", (info) => {
-    console.log(info._filename + "download started");
+    logger(info._filename + " download started");
     const audioName = info._filename.slice(0, info._filename.length - 4);
     res.status(200).attachment(audioName + ".mp3");
     // res.set("content-type", "audio/mpeg");
@@ -176,20 +163,20 @@ const downloadAudio = (res: Response, url: string) => {
     // console.log("Chunk size = " + _data.length);
   });
   audio.on("end", () => {
-    console.log("END");
+    logger("END");
   });
   audio.on("complete", () => {
-    console.log("Complete");
+    logger("Complete");
   });
   audio.on("next", (data) => {
-    console.log("NEXT: " + data);
+    logger("NEXT: " + data);
   });
   audio.on("error", (err) => {
-    console.error("Audio stream error: " + err);
+    logger("Audio stream error: " + err, "error");
   });
 
   return pipeline(audio, res, (error) => {
-    if (error) console.error("Pipeline error(Audio): " + error);
+    if (error) logger("Pipeline error(Audio): " + error, "error");
   });
 };
 
