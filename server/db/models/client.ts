@@ -1,6 +1,6 @@
 import { model, Schema, Document } from "mongoose";
 
-interface IClientModel {
+export interface IClientModel {
   ip: string;
   downloads: number;
   userAgents: string[]; // the client softwares(browsers from same ip address)
@@ -8,7 +8,7 @@ interface IClientModel {
   // proxyIps?: string[];
 }
 
-interface IClientDocument extends IClientModel, Document {}
+export interface IClientDocument extends IClientModel, Document {}
 
 const ClientSchema = new Schema<IClientDocument>(
   {
