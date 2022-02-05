@@ -56,21 +56,21 @@ server.get("*", (req: Request, res: Response, next: NextFunction) => {
 server.use("/api/video", videoRouter);
 
 server.get("/ip", (req: Request, res: Response) => {
-  const obj = {
-    ip: req.ip,
-    ips: req.ips,
-    headers: req.headers,
-    rawHeaders: req.rawHeaders,
-    remoteAddress: req.socket.remoteAddress,
-    localAddress: req.socket.localAddress,
-    rawTrailers: req.rawTrailers,
-    httpVersion: [req.httpVersionMinor, req.httpVersion, req.httpVersionMajor],
-    protocol: req.protocol,
-    trailers: req.trailers,
-    xhr: req.xhr,
-  };
+  // const obj = {
+  //   ip: req.ip,
+  //   ips: req.ips,
+  //   headers: req.headers,
+  //   rawHeaders: req.rawHeaders,
+  //   remoteAddress: req.socket.remoteAddress,
+  //   localAddress: req.socket.localAddress,
+  //   rawTrailers: req.rawTrailers,
+  //   httpVersion: [req.httpVersionMinor, req.httpVersion, req.httpVersionMajor],
+  //   protocol: req.protocol,
+  //   trailers: req.trailers,
+  //   xhr: req.xhr,
+  // };
   // res.json(getClientIp(req));
-  res.json(obj);
+  res.json(req.headers["user-agent"]);
 });
 
 server.get("/ping", (_req: Request, res: Response) => {

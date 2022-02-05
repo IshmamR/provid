@@ -2,7 +2,6 @@ import { model, Schema, Document } from "mongoose";
 
 export interface IClientModel {
   ip: string;
-  downloads: number;
   userAgents: string[]; // the client softwares(browsers from same ip address)
   createdAt: Date;
   // proxyIps?: string[];
@@ -17,9 +16,9 @@ const ClientSchema = new Schema<IClientDocument>(
       required: true,
       unique: true,
     },
-    downloads: {
-      type: Number,
-      default: 0,
+    userAgents: {
+      type: [String],
+      required: true,
     },
   },
   { timestamps: true }
