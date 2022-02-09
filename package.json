@@ -30,7 +30,8 @@
     "react-dom": "17.0.2",
     "styled-breakpoints": "^11.0.4",
     "styled-components": "^5.3.3",
-    "youtube-dl": "3.1.0"
+    "youtube-dl": "3.1.0",
+    "ytsr": "^3.6.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",

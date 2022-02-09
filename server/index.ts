@@ -7,13 +7,14 @@ import errorHandler from "./middlewares/errorHandler";
 import videoRouter from "./routes/video";
 import config from "./utils/config";
 import logger from "./utils/logger";
-import createCon from "./db/connection";
+// import createCon from "./db/connection";
+import ytsr from "ytsr";
 // import getClientIp from "./utils/getClientIp";
 
-createCon(config.DB_URI).catch((err) => {
-  logger(err, "error");
-  process.exit(1);
-});
+// createCon(config.DB_URI).catch((err) => {
+//   logger(err, "error");
+//   process.exit(1);
+// });
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -30,10 +31,7 @@ server.use(express.json()); //{limit: '200mb'}
 
 /* CORS */
 server.use((_req: Request, res: Response, next: NextFunction) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://provid22.herokuapp.com"
-  );
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
@@ -71,6 +69,37 @@ server.get("/ip", (req: Request, res: Response) => {
   // };
   // res.json(getClientIp(req));
   res.json(req.headers["user-agent"]);
+});
+
+/**
+ * @get "/ytsr?search=...."
+ * @response [video_info]
+ */
+server.get("/ytsr", async (req: Request, res: Response) => {
+  const page1 = await ytsr(req.query.search as string, { pages: 1 });
+
+  // if (page1.continuation) {
+  //   const page2 = await ytsr.continueReq(page1.continuation);
+  //   searchResults.push(...[...page2.items]);
+
+  //   // if (page2.continuation) {
+  //   //   const page3 = await ytsr.continueReq(page2.continuation);
+  //   //   searchResults.push(...[...page3.items]);
+
+  //   //   if (page3.continuation) {
+  //   //     const page4 = await ytsr.continueReq(page2.continuation);
+  //   //     searchResults.push(...[...page4.items]);
+  //   //   }
+  //   // }
+  // }
+
+  // res.json([
+  //   ...searchResults.items.filter((vid) =>
+  //     ["video", "movie", "show"].includes(vid.type)
+  //   ),
+  // ]);
+  page1.refinements.length = 0;
+  res.json(page1);
 });
 
 server.get("/ping", (_req: Request, res: Response) => {

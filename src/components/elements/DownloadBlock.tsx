@@ -1,14 +1,14 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Button, Input, Modal, Radio } from "antd";
 import styled from "styled-components";
 import { down } from "styled-breakpoints";
-import EyeOutlined from "@ant-design/icons/EyeOutlined";
-import ClockCircleOutlined from "@ant-design/icons/ClockCircleOutlined";
-import UserOutlined from "@ant-design/icons/UserOutlined";
-import YoutubeOutlined from "@ant-design/icons/YoutubeOutlined";
 import DownloadOutlined from "@ant-design/icons/DownloadOutlined";
 import CloseCircleOutlined from "@ant-design/icons/CloseCircleOutlined";
-import { numberWithCommas } from "../../utils/numbers";
+import { DOWNLOAD_VIDEO } from "../../api/endpoints";
+import { IVideoInfo } from "../../../shared/types/video";
+import { getVideoInfoApi, TVideoApiError } from "../../api/videoApi";
+import { showNotification } from "../../Contexts/notifications";
+import VideoInfoBox from "./VideoInfoBox";
 
 const UrlInput = styled(Input)`
   padding: 0.75rem;
@@ -39,69 +39,13 @@ const Writing1 = styled.p`
   margin-top: 1rem;
   font-size: 1rem;
   line-height: 1.5rem;
-  font-weight: 600;
+  font-weight: 500;
   text-align: center;
-`;
-
-const VideoBox = styled.div`
-  margin: auto;
-  margin-top: 1rem;
-  width: 700px;
-  padding: 1rem;
-  background-color: ${({ theme }) => theme.colors.background};
-  border-radius: 4px;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.11), 0 2px 2px rgba(0, 0, 0, 0.11),
-    0 4px 4px rgba(0, 0, 0, 0.11), 0 6px 8px rgba(0, 0, 0, 0.11),
-    0 8px 16px rgba(0, 0, 0, 0.11);
-  max-width: 85vw;
-  display: grid;
-  grid-template-columns: 2fr 3fr;
-  align-items: center;
-  column-gap: 0.5rem;
-
-  ${down("md")} {
-    grid-template-columns: 1fr;
-    padding: 0;
-  }
-`;
-
-const Thumbnail = styled.img`
-  max-width: 100%;
-  border-radius: 2px;
-
-  ${down("md")} {
-    border: none;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-  }
-`;
-
-const VideoTitle = styled.p`
-  font-size: 1.25rem;
-  line-height: 2rem;
-  font-weight: 700;
-  margin-bottom: 0;
 
   ${down("md")} {
     font-size: 0.875rem;
-    line-height: 1rem;
-  }
-`;
-
-const VideoTexts = styled.p`
-  font-size: 1rem;
-  line-height: 1.5rem;
-  margin-bottom: 0;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-
-  .video_url {
-    font-size: 130%;
-  }
-
-  ${down("md")} {
-    font-size: 0.75rem;
+    line-height: 1.125rem;
+    font-weight: 400;
   }
 `;
 
@@ -116,118 +60,136 @@ const DownloadButton = styled(Button)`
   }
 `;
 
-const VideoTitleBox = styled.div`
-  -webkit-box-orient: vertical;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: normal;
-`;
-
-const VidInfo = styled.div`
-  display: flex;
-  flex-flow: column;
-  justify-content: space-between;
-  height: 100%;
-  row-gap: 0.5rem;
-
-  ${down("md")} {
-    padding: 0.5rem;
-    /* row-gap: 0.5rem; */
-  }
-`;
-
 const DownloadForm = styled.form`
   display: flex;
   flex-flow: column;
 `;
 
 // Proud of myself for doing regex without looking up stack-overflow
-const regex = /^((https:\/\/)?(youtu\.be\/|(www\.)?youtube\.com\/watch\?v=))/;
+const regex = /^((https:\/\/)(youtu\.be\/|(www\.)?youtube\.com\/watch\?v=))/;
 
-interface IVideoInfo {
-  id: string;
-  title: string;
-  thumbnail: string;
-  descriptions: string;
-  upload_date: string;
-  uploader: string;
-  duration: string;
-  view_count: number;
-  url: string;
-  webpage_url: string;
-  fulltitle: string;
-  formats: any[];
-  _filename: string;
-  categories: string[];
-  tags: string[];
-}
+const initialInfo = {
+  hasInfo: false,
+  id: "",
+  title: "",
+  thumbnail: "",
+  descriptions: "",
+  upload_date: "",
+  uploader: "",
+  duration: "",
+  view_count: 0,
+  url: "",
+  webpage_url: "",
+  fulltitle: "",
+  formats: [],
+  _filename: "",
+  categories: [],
+  tags: [],
+};
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface IProps extends React.HTMLAttributes<HTMLElement> {}
 
 const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
-  const [url, setUrl] = useState<string>("");
+  const [input, setInput] = useState<string>("");
+  const [info, setInfo] = useState<IVideoInfo>(initialInfo);
   const [infoLoading, setInfoLoading] = useState<boolean>(false);
-  const [info, setInfo] = useState<IVideoInfo | undefined>(undefined);
   const [downloadModal, setDownloadModal] = useState<boolean>(false);
   const [downloadQuery, setDownloadQuery] = useState<{
     format: "video" | "audio";
-    quality?: "high" | "low";
-  }>({
-    format: "video",
-    quality: undefined,
-  });
-  const [iTag, setITag] = useState<number>(18);
+    iTag: number;
+  }>({ format: "video", iTag: 18 });
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [searchMode, setSearchMode] = useState<boolean>(false);
 
   const inputRef = useRef<Input>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement> | undefined) => {
-    if (e?.target.value && e.target.value.trim() !== "") {
-      setUrl(e.target.value);
+    const value = e?.target.value;
+    if (value && value.trim() !== "") {
+      setInput(value);
     } else {
-      setUrl("");
+      setInput("");
+    }
+
+    // check for search video or submit link
+    if (value && value.length >= 8) {
+      if (!/https:\/\//gi.test(value) && !searchMode) {
+        setSearchMode(true);
+      } else if (/https:\/\//gi.test(value)) {
+        setSearchMode(false);
+      }
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     inputRef.current?.focus();
 
     if (navigator.clipboard?.readText) {
       navigator.clipboard.readText().then((clipText) => {
         if (regex.test(clipText)) {
-          setUrl(clipText);
+          setInput(clipText);
         }
       });
     }
   }, []);
 
+  /**
+   * @on_submit_event_handler
+   * updates video info based on search or submit
+   */
   const handleGetInfo = (f: React.FormEvent<HTMLFormElement> | undefined) => {
     f?.preventDefault();
     setInfoLoading(true);
 
-    const valid = regex.test(url);
-    if (!valid) {
+    /**
+     * @if_text_search_mode
+     */
+    if (searchMode) {
       setInfoLoading(false);
       return;
     }
 
-    fetch(`/api/video/info?url=${url}`)
-      .then((res) => res.json())
-      .then((data: IVideoInfo) => {
-        setInfo(data);
-        const hdFormat = data.formats.find(
+    /**
+     * @else_if_video_link_submission
+     */
+    const valid = regex.test(input);
+    if (!valid) {
+      setInfoLoading(false);
+      showNotification(
+        "error",
+        "URL not valid",
+        "Provide a valid YouTube video url"
+      );
+      return;
+    }
+
+    // show a random loading without calling an api :p
+    if (info.webpage_url === input.trim()) {
+      const random = Math.floor(Math.random() * 10000) + 1000;
+      setTimeout(() => {
+        setInfoLoading(false);
+      }, random);
+      return;
+    }
+
+    getVideoInfoApi(input.trim())
+      .then((res) => {
+        const hdFormat = res.data.formats.find(
           (f: any) =>
             ["720p", "1080p"].includes(f.format_note) && f.asr !== null
         );
         if (hdFormat) {
-          setITag(hdFormat.format_id);
+          setDownloadQuery((prev) => ({ ...prev, iTag: hdFormat.format_id }));
         }
+        setInfo({ ...res.data, hasInfo: true });
       })
-      // eslint-disable-next-line no-console
-      .catch((err) => console.log(err))
+      .catch((err: TVideoApiError) => {
+        showNotification(
+          "error",
+          err.response?.data.message || "Could not fetch video info"
+        );
+      })
       .finally(() => setInfoLoading(false));
   };
 
@@ -236,7 +198,14 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
     setTimeout(() => {
       setIsDownloading(false);
       setDownloadModal(false);
-    }, 5000);
+    }, 6000);
+  };
+
+  const handleVideoBoxClose = (vidId: string) => {
+    if (info.id === vidId) {
+      setInfo(initialInfo);
+      setInput("");
+    }
   };
 
   return (
@@ -244,12 +213,13 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
       <Form onSubmit={handleGetInfo} {...props}>
         <UrlInput
           ref={inputRef}
-          value={url}
+          value={input}
           onChange={handleChange}
           allowClear
           name="provide-youtube-url"
           size="large"
           placeholder="Paste video url e.g.: https://www.youtube.com/watch?v=..."
+          required
         />
         <SubmitButton
           type="primary"
@@ -257,41 +227,19 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
           size="large"
           loading={infoLoading}
         >
-          Submit
+          {searchMode ? "Search" : "Submit"}
         </SubmitButton>
       </Form>
       <Writing1>
-        {"Submit your chosen youtube video url and click `Download`!"}
+        Submit your chosen youtube video url and click <code>Download</code>!
       </Writing1>
 
-      <VideoBox style={{ display: info ? "grid" : "none" }}>
-        <Thumbnail src={info?.thumbnail} alt={info?.title} />
-        <VidInfo>
-          <div>
-            <VideoTitleBox>
-              <VideoTitle>{info?.title}</VideoTitle>
-            </VideoTitleBox>
-            <VideoTexts>
-              <ClockCircleOutlined />
-              &nbsp;{info?.duration}&nbsp;&nbsp;
-              <EyeOutlined />
-              &nbsp;{numberWithCommas(info?.view_count)}&nbsp;&nbsp;
-              <UserOutlined />
-              &nbsp;{info?.uploader}&nbsp;&nbsp;
-              <a href={info?.url} target="_blank" rel="noreferrer">
-                <YoutubeOutlined className="video_url" />
-              </a>
-            </VideoTexts>
-          </div>
-          <DownloadButton
-            size={"large"}
-            icon={<DownloadOutlined />}
-            onClick={() => setDownloadModal(true)}
-          >
-            Download
-          </DownloadButton>
-        </VidInfo>
-      </VideoBox>
+      <VideoInfoBox
+        info={info}
+        key={info.id}
+        onDownloadClick={() => setDownloadModal(true)}
+        onCloseVideoBox={handleVideoBoxClose}
+      />
 
       {/* Download Modal */}
       <Modal
@@ -312,12 +260,12 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
         ></iframe>
         <DownloadForm
           method="POST"
-          action="/api/video/download"
+          action={DOWNLOAD_VIDEO()}
           target="hiddenFrame"
         >
           <input
             name="url"
-            value={info?.webpage_url}
+            value={info.webpage_url}
             style={{ display: "none" }}
             readOnly
           />
@@ -340,7 +288,7 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
           <input
             style={{ display: "none" }}
             name="iTag"
-            value={iTag}
+            value={downloadQuery.iTag}
             readOnly
           />
           <p>*functionality coming soon</p>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import React from "react";
 import { down } from "styled-breakpoints";
 import styled from "styled-components";
 
@@ -54,9 +55,11 @@ const HeaderInner = styled.div`
   }
 `;
 
-const Header: React.FC = (): JSX.Element => {
+const Header: React.FC = (
+  props: React.HTMLAttributes<HTMLElement>
+): JSX.Element => {
   return (
-    <HeaderContainer>
+    <HeaderContainer {...props}>
       <HeaderInner>
         <Link href={"/"}>
           <a>

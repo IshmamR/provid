@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { pipeline } from "stream";
 import ytdl from "youtube-dl";
+import ytsr from "ytsr";
 import Download from "../db/models/download";
 import logger from "../utils/logger";
 
@@ -10,13 +11,45 @@ import logger from "../utils/logger";
  */
 const getVideoInfo = async (req: Request, res: Response) => {
   const url = req.query.url as string;
-  ytdl.getInfo(url, (err, info) => {
+  ytdl.getInfo(url, (err: Error, info) => {
     if (err) {
-      logger(`Video info error: ${err}`, "error");
-      return res.status(404).json({ message: "Info not found" });
+      const errorMessage = err.message.split("ERROR: ")[1];
+      logger(`Video info error: ${errorMessage}`, "error");
+      return res
+        .status(404)
+        .json({ message: errorMessage || "Info not found" });
     }
     return res.status(200).json(info);
   });
+};
+
+/**
+ * @method GET
+ * @param /video/search?search=....
+ * @returns video list
+ */
+const searchVideos = async (req: Request, res: Response) => {
+  const search = req.query.search?.toString();
+  const page = await ytsr(search as string, { pages: 1 });
+
+  // empty list (unnecessary array)
+  page.refinements.length = 0;
+  return res.status(200).json(page);
+};
+
+/**
+ * @method POST
+ * @param /video/continue
+ * @returns continued video list
+ */
+const continueList = async (req: Request, res: Response) => {
+  const { continuation } = req.body;
+  if (!continuation) {
+    return res.status(400).json({ message: "Provide a continuation object" });
+  }
+
+  const nextPage = await ytsr.continueReq(continuation);
+  return res.status(200).json(nextPage);
 };
 
 /**
@@ -246,4 +279,10 @@ const streamMedia = async (req: Request, res: Response) => {
   });
 };
 
-export default { getVideoInfo, downloadMedia, streamMedia };
+export default {
+  getVideoInfo,
+  searchVideos,
+  continueList,
+  downloadMedia,
+  streamMedia,
+};
