@@ -3,12 +3,12 @@ import dotenv from "dotenv";
 dotenv.config();
 import next from "next";
 import express, { NextFunction, Request, Response } from "express";
+import ytsr from "ytsr";
 import errorHandler from "./middlewares/errorHandler";
 import videoRouter from "./routes/video";
 import config from "./utils/config";
 import logger from "./utils/logger";
 // import createCon from "./db/connection";
-import ytsr from "ytsr";
 // import getClientIp from "./utils/getClientIp";
 
 // createCon(config.DB_URI).catch((err) => {

@@ -4,6 +4,7 @@ export interface IClientModel {
   ip: string;
   userAgents: string[]; // the client softwares(browsers from same ip address)
   createdAt: Date;
+  // ips: string[]; // for same user from multiple wifi
   // proxyIps?: string[];
 }
 

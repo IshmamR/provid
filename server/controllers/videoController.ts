@@ -30,8 +30,11 @@ const getVideoInfo = async (req: Request, res: Response) => {
  */
 const searchVideos = async (req: Request, res: Response) => {
   const search = req.query.search?.toString();
-  const page = await ytsr(search as string, { pages: 1 });
+  if (!search)
+    return res.status(400).json({ message: "Please provide a search query" });
 
+  const page = await ytsr(search, { pages: 1 });
+  page.items = page.items.filter((vid) => vid.type === "video");
   // empty list (unnecessary array)
   page.refinements.length = 0;
   return res.status(200).json(page);

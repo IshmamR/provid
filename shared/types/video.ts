@@ -112,3 +112,8 @@ export interface ISearchedVideoResponse {
     }[];
   }[];
 }
+
+export interface IVideoContinuationResponse {
+  items: ISearchedVideoResponse["items"];
+  continuation: ISearchedVideoResponse["continuation"];
+}

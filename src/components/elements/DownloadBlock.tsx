@@ -5,10 +5,18 @@ import { down } from "styled-breakpoints";
 import DownloadOutlined from "@ant-design/icons/DownloadOutlined";
 import CloseCircleOutlined from "@ant-design/icons/CloseCircleOutlined";
 import { DOWNLOAD_VIDEO } from "../../api/endpoints";
-import { IVideoInfo } from "../../../shared/types/video";
-import { getVideoInfoApi, TVideoApiError } from "../../api/videoApi";
+import {
+  ISearchedVideoResponse,
+  IVideoInfo,
+} from "../../../shared/types/video";
+import {
+  getVideoInfoApi,
+  searchVideoByText,
+  TVideoApiError,
+} from "../../api/videoApi";
 import { showNotification } from "../../Contexts/notifications";
 import VideoInfoBox from "./VideoInfoBox";
+import VideoItemInfo from "./VideoItemInfoBox";
 
 const UrlInput = styled(Input)`
   padding: 0.75rem;
@@ -94,13 +102,15 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
   const [input, setInput] = useState<string>("");
   const [info, setInfo] = useState<IVideoInfo>(initialInfo);
   const [infoLoading, setInfoLoading] = useState<boolean>(false);
-  const [downloadModal, setDownloadModal] = useState<boolean>(false);
+  const [downloadModal, setDownloadModal] = useState<string | null>(null);
   const [downloadQuery, setDownloadQuery] = useState<{
     format: "video" | "audio";
     iTag: number;
   }>({ format: "video", iTag: 18 });
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
-  const [searchMode, setSearchMode] = useState<boolean>(false);
+  const [searchMode, setSearchMode] = useState<boolean>(true);
+  const [videoListData, setVideoListData] =
+    useState<ISearchedVideoResponse | null>(null);
 
   const inputRef = useRef<Input>(null);
 
@@ -108,17 +118,14 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
     const value = e?.target.value;
     if (value && value.trim() !== "") {
       setInput(value);
+      // check for search video or submit link
+      if (/https:\/\//gi.test(value)) {
+        setSearchMode(false);
+      } else {
+        setSearchMode(true);
+      }
     } else {
       setInput("");
-    }
-
-    // check for search video or submit link
-    if (value && value.length >= 8) {
-      if (!/https:\/\//gi.test(value) && !searchMode) {
-        setSearchMode(true);
-      } else if (/https:\/\//gi.test(value)) {
-        setSearchMode(false);
-      }
     }
   };
 
@@ -142,11 +149,27 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
     f?.preventDefault();
     setInfoLoading(true);
 
+    if (input.trim() === "") {
+      showNotification("error", "Input field is empty");
+      setInfoLoading(false);
+      return;
+    }
+
     /**
      * @if_text_search_mode
      */
     if (searchMode) {
-      setInfoLoading(false);
+      searchVideoByText(input)
+        .then((res) => {
+          setVideoListData(res.data);
+        })
+        .catch((err: TVideoApiError) => {
+          showNotification(
+            "error",
+            err.response?.data.message || "Could not fetch video list"
+          );
+        })
+        .finally(() => setInfoLoading(false));
       return;
     }
 
@@ -197,7 +220,7 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
     setIsDownloading(true);
     setTimeout(() => {
       setIsDownloading(false);
-      setDownloadModal(false);
+      setDownloadModal(null);
     }, 6000);
   };
 
@@ -206,6 +229,10 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
       setInfo(initialInfo);
       setInput("");
     }
+  };
+
+  const handleDownload = (vidUrl: string) => {
+    setDownloadModal(vidUrl);
   };
 
   return (
@@ -237,14 +264,24 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
       <VideoInfoBox
         info={info}
         key={info.id}
-        onDownloadClick={() => setDownloadModal(true)}
+        onDownloadClick={handleDownload}
         onCloseVideoBox={handleVideoBoxClose}
       />
 
+      {videoListData
+        ? videoListData.items.map((vid) => (
+            <VideoItemInfo
+              key={vid.id}
+              info={vid}
+              onDownloadClick={handleDownload}
+            />
+          ))
+        : null}
+
       {/* Download Modal */}
       <Modal
-        visible={downloadModal}
-        onCancel={() => setDownloadModal(false)}
+        visible={!!downloadModal}
+        onCancel={() => setDownloadModal(null)}
         closeIcon={<CloseCircleOutlined />}
         footer={null}
       >
@@ -265,7 +302,7 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
         >
           <input
             name="url"
-            value={info.webpage_url}
+            value={downloadModal ?? ""}
             style={{ display: "none" }}
             readOnly
           />

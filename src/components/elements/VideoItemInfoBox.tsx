@@ -5,20 +5,31 @@ import { down } from "styled-breakpoints";
 import EyeOutlined from "@ant-design/icons/EyeOutlined";
 import ClockCircleOutlined from "@ant-design/icons/ClockCircleOutlined";
 import UserOutlined from "@ant-design/icons/UserOutlined";
-import YoutubeOutlined from "@ant-design/icons/YoutubeOutlined";
 import DownloadOutlined from "@ant-design/icons/DownloadOutlined";
-import CloseCircleTwoTone from "@ant-design/icons/CloseCircleTwoTone";
-import { IVideoInfo } from "../../../shared/types/video";
+import { ISearchedVideoResponse } from "../../../shared/types/video";
 import { numberWithCommas } from "../../utils/numbers";
+// import YoutubeOutlined from "@ant-design/icons/YoutubeOutlined";
 
-const CloseIcon = styled(CloseCircleTwoTone)`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  cursor: pointer;
+const Thumbnail = styled.a<{ src: string }>`
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
 
-  svg {
-    font-size: 18px;
+  background-image: ${({ src }) => `url(${src})`};
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+
+  &:hover {
+    border: 1px solid ${({ theme }) => theme.colors.primary.main};
+  }
+
+  ${down("md")} {
+    border: none;
+    height: 7rem;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
 `;
 
@@ -39,14 +50,13 @@ const VideoBox = styled.div`
   align-items: center;
   column-gap: 0.5rem;
 
-  & > ${CloseIcon} {
-    opacity: 0;
-    transition: all 0.2s ease-out;
+  ${Thumbnail} {
+    opacity: 0.9;
   }
 
   &:hover {
-    & > ${CloseIcon} {
-      opacity: 0.8;
+    ${Thumbnail} {
+      opacity: 1;
     }
   }
 
@@ -54,20 +64,9 @@ const VideoBox = styled.div`
     grid-template-columns: 1fr;
     padding: 0;
 
-    & > ${CloseIcon} {
+    ${Thumbnail} {
       opacity: 1;
     }
-  }
-`;
-
-const Thumbnail = styled.img`
-  max-width: 100%;
-  border-radius: 2px;
-
-  ${down("md")} {
-    border: none;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
   }
 `;
 
@@ -133,24 +132,24 @@ const DownloadButton = styled(Button)`
 `;
 
 interface IProps extends React.HTMLAttributes<HTMLDivElement> {
-  info: IVideoInfo;
+  info: ISearchedVideoResponse["items"][number];
   onDownloadClick: (vidUrl: string) => void;
-  onCloseVideoBox?: (vidId: string) => void;
 }
 
-const VideoInfo: React.FC<IProps> = ({
+const VideoItemInfo: React.FC<IProps> = ({
   info,
   onDownloadClick,
-  onCloseVideoBox,
   ...rest
 }): JSX.Element => {
   return (
-    <VideoBox style={{ display: info.hasInfo ? "grid" : "none" }} {...rest}>
-      <CloseIcon
-        twoToneColor={"#ff0000"}
-        onClick={() => onCloseVideoBox && info && onCloseVideoBox(info.id)}
+    <VideoBox {...rest}>
+      <Thumbnail
+        href={info.url}
+        src={info.bestThumbnail.url}
+        title={info.title}
+        target="_blank"
+        rel="noreferrer"
       />
-      <Thumbnail src={info.thumbnail} alt={info.title} />
       <VidInfo>
         <div>
           <VideoTitleBox>
@@ -160,20 +159,27 @@ const VideoInfo: React.FC<IProps> = ({
             <ClockCircleOutlined />
             &nbsp;{info.duration}&nbsp;&nbsp;
             <EyeOutlined />
-            &nbsp;{numberWithCommas(info.view_count)}&nbsp;&nbsp;
-            <UserOutlined />
-            &nbsp;
-            <span title={info.uploader}>{info.uploader.slice(0, 12)}</span>
-            &nbsp;&nbsp;
-            <a href={info.url} target="_blank" rel="noreferrer">
-              <YoutubeOutlined className="video_url" />
+            &nbsp;{numberWithCommas(info.views)}&nbsp;&nbsp;
+            <a
+              href={info.author.url}
+              title={info.author.name}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <UserOutlined />
+              &nbsp;
+              {info.author.name.slice(0, 15)}
             </a>
+            &nbsp;&nbsp;
+            {/* <a href={info.url} target="_blank" rel="noreferrer">
+              <YoutubeOutlined className="video_url" />
+            </a> */}
           </VideoTexts>
         </div>
         <DownloadButton
           size={"large"}
           icon={<DownloadOutlined />}
-          onClick={() => onDownloadClick(info.webpage_url)}
+          onClick={() => onDownloadClick(info.url)}
         >
           Download
         </DownloadButton>
@@ -186,7 +192,7 @@ function areEqual(
   prevProps: Readonly<React.PropsWithChildren<IProps>>,
   nextProps: Readonly<React.PropsWithChildren<IProps>>
 ): boolean {
-  return prevProps.info.webpage_url === nextProps.info.webpage_url;
+  return prevProps.info.url === nextProps.info.url;
 }
 
-export default memo(VideoInfo, areEqual);
+export default memo(VideoItemInfo, areEqual);
