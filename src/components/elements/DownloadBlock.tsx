@@ -1,5 +1,6 @@
+import dynamic from "next/dynamic";
 import React, { useRef, useState, useEffect } from "react";
-import { Button, Input, Modal, Radio } from "antd";
+import { Button, Input } from "antd";
 import styled from "styled-components";
 import { down } from "styled-breakpoints";
 import DownloadOutlined from "@ant-design/icons/DownloadOutlined";
@@ -17,9 +18,16 @@ import {
 } from "../../api/videoApi";
 import { showNotification } from "../../Contexts/notifications";
 import VideoInfoBox from "./VideoInfoBox";
-import VideoItemInfo from "./VideoItemInfoBox";
 import VideoItemSkeleton from "./VideoItemSkeleton";
 import { BoxLayout } from "../layouts/BoxLayout";
+
+/**
+ * Dynamic import for less first-load-js
+ */
+const Modal = dynamic(() => import("antd/lib/modal/Modal"));
+const Radio = dynamic(() => import("antd/lib/radio/index"));
+const RadioGroup = dynamic(() => import("antd/lib/radio/group"));
+const VideoItemInfo = dynamic(() => import("./VideoItemInfoBox"));
 
 const UrlInput = styled(Input)`
   padding: 0.75rem;
@@ -367,7 +375,7 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
               readOnly
             />
             <h3>Format</h3>
-            <Radio.Group
+            <RadioGroup
               name="format"
               value={downloadQuery.format}
               onChange={(e) =>
@@ -383,7 +391,7 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
               <Radio value={"audio"}>
                 <p>Audio (.mp3)</p>
               </Radio>
-            </Radio.Group>
+            </RadioGroup>
             <h3>Quality</h3>
             <input
               style={{ display: "none" }}
