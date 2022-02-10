@@ -8,13 +8,13 @@ import errorHandler from "./middlewares/errorHandler";
 import videoRouter from "./routes/video";
 import config from "./utils/config";
 import logger from "./utils/logger";
-// import createCon from "./db/connection";
+import createCon from "./db/connection";
 // import getClientIp from "./utils/getClientIp";
 
-// createCon(config.DB_URI).catch((err) => {
-//   logger(err, "error");
-//   process.exit(1);
-// });
+createCon(config.DB_URI).catch((err) => {
+  logger(err, "error");
+  process.exit(1);
+});
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });

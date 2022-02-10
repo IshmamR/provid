@@ -10,6 +10,7 @@ import {
   IVideoInfo,
 } from "../../../shared/types/video";
 import {
+  continueVideoList,
   getVideoInfoApi,
   searchVideoByText,
   TVideoApiError,
@@ -17,6 +18,8 @@ import {
 import { showNotification } from "../../Contexts/notifications";
 import VideoInfoBox from "./VideoInfoBox";
 import VideoItemInfo from "./VideoItemInfoBox";
+import VideoItemSkeleton from "./VideoItemSkeleton";
+import { BoxLayout } from "../layouts/BoxLayout";
 
 const UrlInput = styled(Input)`
   padding: 0.75rem;
@@ -34,9 +37,7 @@ const SubmitButton = styled(Button)`
 `;
 
 const Form = styled.form`
-  width: 700px;
-  max-width: 85vw;
-  margin: auto;
+  width: 100%;
   margin-top: 2rem;
   display: grid;
   grid-template-columns: 5fr 1fr; ;
@@ -71,6 +72,11 @@ const DownloadButton = styled(Button)`
 const DownloadForm = styled.form`
   display: flex;
   flex-flow: column;
+`;
+
+const LoadMoreButton = styled(Button)`
+  width: 100%;
+  margin-top: 1.5rem;
 `;
 
 // Proud of myself for doing regex without looking up stack-overflow
@@ -111,6 +117,7 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
   const [searchMode, setSearchMode] = useState<boolean>(true);
   const [videoListData, setVideoListData] =
     useState<ISearchedVideoResponse | null>(null);
+  const [moreLoading, setMoreLoading] = useState<boolean>(false);
 
   const inputRef = useRef<Input>(null);
 
@@ -217,7 +224,6 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
   };
 
   const handleStartDownload = () => {
-    setIsDownloading(true);
     setTimeout(() => {
       setIsDownloading(false);
       setDownloadModal(null);
@@ -235,111 +241,150 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
     setDownloadModal(vidUrl);
   };
 
+  const handleLoadMoreClick = () => {
+    if (!videoListData) return;
+    setMoreLoading(true);
+    continueVideoList(videoListData.continuation)
+      .then((res) => {
+        setVideoListData((prev) =>
+          prev ? { ...prev, items: res.data.items } : null
+        );
+      })
+      .catch((err: TVideoApiError) => {
+        showNotification(
+          "error",
+          err.response?.data.message || "Could not fetch video list"
+        );
+      })
+      .finally(() => setMoreLoading(false));
+  };
+
   return (
     <>
-      <Form onSubmit={handleGetInfo} {...props}>
-        <UrlInput
-          ref={inputRef}
-          value={input}
-          onChange={handleChange}
-          allowClear
-          name="provide-youtube-url"
-          size="large"
-          placeholder="Paste video url e.g.: https://www.youtube.com/watch?v=..."
-          required
-        />
-        <SubmitButton
-          type="primary"
-          htmlType="submit"
-          size="large"
-          loading={infoLoading}
-        >
-          {searchMode ? "Search" : "Submit"}
-        </SubmitButton>
-      </Form>
-      <Writing1>
-        Submit your chosen youtube video url and click <code>Download</code>!
-      </Writing1>
-
-      <VideoInfoBox
-        info={info}
-        key={info.id}
-        onDownloadClick={handleDownload}
-        onCloseVideoBox={handleVideoBoxClose}
-      />
-
-      {videoListData
-        ? videoListData.items.map((vid) => (
-            <VideoItemInfo
-              key={vid.id}
-              info={vid}
-              onDownloadClick={handleDownload}
-            />
-          ))
-        : null}
-
-      {/* Download Modal */}
-      <Modal
-        visible={!!downloadModal}
-        onCancel={() => setDownloadModal(null)}
-        closeIcon={<CloseCircleOutlined />}
-        footer={null}
-      >
-        <iframe
-          name="hiddenFrame"
-          style={{
-            position: "absolute",
-            top: "-1px",
-            left: "-1px",
-            width: "1px",
-            height: "1px",
-          }}
-        ></iframe>
-        <DownloadForm
-          method="POST"
-          action={DOWNLOAD_VIDEO()}
-          target="hiddenFrame"
-        >
-          <input
-            name="url"
-            value={downloadModal ?? ""}
-            style={{ display: "none" }}
-            readOnly
-          />
-          <h3>Format</h3>
-          <Radio.Group
-            name="format"
-            value={downloadQuery.format}
-            onChange={(e) =>
-              setDownloadQuery((prev) => ({ ...prev, format: e.target.value }))
-            }
-          >
-            <Radio value={"video"}>
-              <p>Video (.mp4)</p>
-            </Radio>
-            <Radio value={"audio"}>
-              <p>Audio (.mp3)</p>
-            </Radio>
-          </Radio.Group>
-          <h3>Quality</h3>
-          <input
-            style={{ display: "none" }}
-            name="iTag"
-            value={downloadQuery.iTag}
-            readOnly
-          />
-          <p>*functionality coming soon</p>
-          <DownloadButton
+      <BoxLayout>
+        <Form onSubmit={handleGetInfo} {...props}>
+          <UrlInput
+            ref={inputRef}
+            value={input}
+            onChange={handleChange}
+            allowClear
+            name="provide-youtube-url"
             size="large"
-            icon={<DownloadOutlined />}
+            placeholder="Paste video url e.g.: https://www.youtube.com/watch?v=..."
+            required
+          />
+          <SubmitButton
+            type="primary"
             htmlType="submit"
-            onClick={handleStartDownload}
-            loading={isDownloading}
+            size="large"
+            loading={infoLoading}
           >
-            Start Download
-          </DownloadButton>
-        </DownloadForm>
-      </Modal>
+            {searchMode ? "Search" : "Submit"}
+          </SubmitButton>
+        </Form>
+        <Writing1>
+          Submit your chosen youtube video url and click <code>Download</code>!
+        </Writing1>
+
+        <VideoInfoBox
+          info={info}
+          key={info.id}
+          onDownloadClick={handleDownload}
+          onCloseVideoBox={handleVideoBoxClose}
+        />
+
+        {videoListData
+          ? videoListData.items.map((vid) => (
+              <>
+                <VideoItemInfo
+                  key={vid.url}
+                  info={vid}
+                  onDownloadClick={handleDownload}
+                />
+              </>
+            ))
+          : null}
+
+        <LoadMoreButton
+          style={{
+            display: moreLoading ? "none" : videoListData ? "block" : "none",
+          }}
+          type="primary"
+          size="large"
+          onClick={handleLoadMoreClick}
+        >
+          Load More
+        </LoadMoreButton>
+        <VideoItemSkeleton
+          style={{ display: videoListData && moreLoading ? "grid" : "none" }}
+        />
+
+        {/* Download Modal */}
+        <Modal
+          visible={!!downloadModal}
+          onCancel={() => setDownloadModal(null)}
+          closeIcon={<CloseCircleOutlined />}
+          footer={null}
+        >
+          <iframe
+            name="hiddenFrame"
+            style={{
+              position: "absolute",
+              top: "-1px",
+              left: "-1px",
+              width: "1px",
+              height: "1px",
+            }}
+          ></iframe>
+          <DownloadForm
+            method="POST"
+            action={DOWNLOAD_VIDEO()}
+            target="hiddenFrame"
+          >
+            <input
+              name="url"
+              value={downloadModal ?? ""}
+              style={{ display: "none" }}
+              readOnly
+            />
+            <h3>Format</h3>
+            <Radio.Group
+              name="format"
+              value={downloadQuery.format}
+              onChange={(e) =>
+                setDownloadQuery((prev) => ({
+                  ...prev,
+                  format: e.target.value,
+                }))
+              }
+            >
+              <Radio value={"video"}>
+                <p>Video (.mp4)</p>
+              </Radio>
+              <Radio value={"audio"}>
+                <p>Audio (.mp3)</p>
+              </Radio>
+            </Radio.Group>
+            <h3>Quality</h3>
+            <input
+              style={{ display: "none" }}
+              name="iTag"
+              value={downloadQuery.iTag}
+              readOnly
+            />
+            <p>*functionality coming soon</p>
+            <DownloadButton
+              size="large"
+              icon={<DownloadOutlined />}
+              htmlType="submit"
+              onClick={handleStartDownload}
+              loading={isDownloading}
+            >
+              Start Download
+            </DownloadButton>
+          </DownloadForm>
+        </Modal>
+      </BoxLayout>
     </>
   );
 };

@@ -52,6 +52,7 @@ const continueList = async (req: Request, res: Response) => {
   }
 
   const nextPage = await ytsr.continueReq(continuation);
+  nextPage.items = nextPage.items.filter((vid) => vid.type === "video");
   return res.status(200).json(nextPage);
 };
 

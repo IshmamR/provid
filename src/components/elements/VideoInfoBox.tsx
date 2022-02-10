@@ -24,16 +24,14 @@ const CloseIcon = styled(CloseCircleTwoTone)`
 
 const VideoBox = styled.div`
   position: relative;
-  margin: auto;
   margin-top: 1rem;
-  width: 700px;
+  width: 100%;
   padding: 1rem;
   background-color: ${({ theme }) => theme.colors.background};
   border-radius: 4px;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.11), 0 2px 2px rgba(0, 0, 0, 0.11),
     0 4px 4px rgba(0, 0, 0, 0.11), 0 6px 8px rgba(0, 0, 0, 0.11),
     0 8px 16px rgba(0, 0, 0, 0.11);
-  max-width: 85vw;
   display: grid;
   grid-template-columns: 2fr 3fr;
   align-items: center;

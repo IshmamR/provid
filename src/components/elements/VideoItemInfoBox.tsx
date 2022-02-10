@@ -10,7 +10,7 @@ import { ISearchedVideoResponse } from "../../../shared/types/video";
 import { numberWithCommas } from "../../utils/numbers";
 // import YoutubeOutlined from "@ant-design/icons/YoutubeOutlined";
 
-const Thumbnail = styled.a<{ src: string }>`
+const Thumbnail = styled.a<{ src: string; height: number; width: string }>`
   display: block;
   width: 100%;
   height: 100%;
@@ -27,7 +27,7 @@ const Thumbnail = styled.a<{ src: string }>`
 
   ${down("md")} {
     border: none;
-    height: 7rem;
+    height: ${({ height, width }) => `calc(${width} / ${height} * 90)`};
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }
@@ -35,16 +35,14 @@ const Thumbnail = styled.a<{ src: string }>`
 
 const VideoBox = styled.div`
   position: relative;
-  margin: auto;
   margin-top: 1rem;
-  width: 700px;
+  width: 100%;
   padding: 1rem;
   background-color: ${({ theme }) => theme.colors.background};
   border-radius: 4px;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.11), 0 2px 2px rgba(0, 0, 0, 0.11),
     0 4px 4px rgba(0, 0, 0, 0.11), 0 6px 8px rgba(0, 0, 0, 0.11),
     0 8px 16px rgba(0, 0, 0, 0.11);
-  max-width: 85vw;
   display: grid;
   grid-template-columns: 2fr 3fr;
   align-items: center;
@@ -145,7 +143,9 @@ const VideoItemInfo: React.FC<IProps> = ({
     <VideoBox {...rest}>
       <Thumbnail
         href={info.url}
-        src={info.bestThumbnail.url}
+        src={info.bestThumbnail?.url}
+        height={info.bestThumbnail?.height}
+        width={`${info.bestThumbnail?.width}px`}
         title={info.title}
         target="_blank"
         rel="noreferrer"
