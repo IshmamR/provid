@@ -126,13 +126,14 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
     if (value && value.trim() !== "") {
       setInput(value);
       // check for search video or submit link
-      if (/https:\/\//gi.test(value)) {
+      if (regex.test(value)) {
         setSearchMode(false);
       } else {
         setSearchMode(true);
       }
     } else {
       setInput("");
+      setSearchMode(true);
     }
   };
 
@@ -231,10 +232,14 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
   };
 
   const handleVideoBoxClose = (vidId: string) => {
-    if (info.id === vidId) {
-      setInfo(initialInfo);
-      setInput("");
-    }
+    setInfo((prev) => {
+      if (prev.id === vidId) return initialInfo;
+      return prev;
+    });
+    setInput((prev) => {
+      if (prev === info.webpage_url) return "";
+      return prev;
+    });
   };
 
   const handleDownload = (vidUrl: string) => {
@@ -246,9 +251,15 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
     setMoreLoading(true);
     continueVideoList(videoListData.continuation)
       .then((res) => {
-        setVideoListData((prev) =>
-          prev ? { ...prev, items: res.data.items } : null
-        );
+        setVideoListData((prev) => {
+          if (prev)
+            return {
+              ...prev,
+              items: [...prev.items, ...res.data.items],
+              continuation: res.data.continuation,
+            };
+          return prev;
+        });
       })
       .catch((err: TVideoApiError) => {
         showNotification(
@@ -283,31 +294,39 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
           </SubmitButton>
         </Form>
         <Writing1>
-          Submit your chosen youtube video url and click <code>Download</code>!
+          <strong>To search</strong>: Type in what you want to search from
+          YouTube To get.
+          <br />
+          <strong>To get download link</strong>: Submit your chosen youtube
+          video url and click&nbsp;
+          <code>Download</code>!
         </Writing1>
 
         <VideoInfoBox
           info={info}
-          key={info.id}
+          key={info.webpage_url}
           onDownloadClick={handleDownload}
           onCloseVideoBox={handleVideoBoxClose}
         />
 
+        <Writing1></Writing1>
         {videoListData
           ? videoListData.items.map((vid) => (
-              <>
-                <VideoItemInfo
-                  key={vid.url}
-                  info={vid}
-                  onDownloadClick={handleDownload}
-                />
-              </>
+              <VideoItemInfo
+                key={vid.url}
+                info={vid}
+                onDownloadClick={handleDownload}
+              />
             ))
           : null}
 
         <LoadMoreButton
           style={{
-            display: moreLoading ? "none" : videoListData ? "block" : "none",
+            display: moreLoading
+              ? "none"
+              : videoListData?.items.length
+              ? "block"
+              : "none",
           }}
           type="primary"
           size="large"

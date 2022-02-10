@@ -25,10 +25,10 @@ const VideoBox = styled.div`
 `;
 
 const skeletonGradient = keyframes`
-  0%, 30% {
+  0% {
     left: -100%;
   }
-  100% {
+  30%, 100% {
     left: 100%;
   }
 `;

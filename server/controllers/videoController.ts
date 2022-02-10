@@ -33,8 +33,14 @@ const searchVideos = async (req: Request, res: Response) => {
   if (!search)
     return res.status(400).json({ message: "Please provide a search query" });
 
-  const page = await ytsr(search, { pages: 1 });
-  page.items = page.items.filter((vid) => vid.type === "video");
+  const filters1 = await ytsr.getFilters(search);
+  const filter1 = filters1.get("Type")?.get("Video");
+
+  if (!filter1?.url)
+    return res.status(404).json({ message: "Could not get data" });
+
+  const page = await ytsr(filter1.url, { pages: 1 });
+  // page.items = page.items.filter((vid) => vid.type === "video");
   // empty list (unnecessary array)
   page.refinements.length = 0;
   return res.status(200).json(page);
