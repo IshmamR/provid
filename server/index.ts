@@ -69,8 +69,8 @@ app
 
 server.use(errorHandler);
 
-export default server;
-
 server.listen(config.PORT, () => {
   logger(`provid server listening on ${config.PORT}`, "important");
 });
+
+export default server;

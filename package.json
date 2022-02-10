@@ -56,5 +56,8 @@
   },
   "cacheDirectories": [
     ".next/cache"
-  ]
+  ],
+  "engines": {
+    "node": "14.x.x"
+  }
 }
