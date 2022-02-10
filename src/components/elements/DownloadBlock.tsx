@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
 import React, { useRef, useState, useEffect } from "react";
-import { Button, Input } from "antd";
+import { Button, Input, Modal } from "antd";
 import styled from "styled-components";
 import { down } from "styled-breakpoints";
 import DownloadOutlined from "@ant-design/icons/DownloadOutlined";
@@ -24,7 +24,6 @@ import { BoxLayout } from "../layouts/BoxLayout";
 /**
  * Dynamic import for less first-load-js
  */
-const Modal = dynamic(() => import("antd/lib/modal/Modal"));
 const Radio = dynamic(() => import("antd/lib/radio/index"));
 const RadioGroup = dynamic(() => import("antd/lib/radio/group"));
 const VideoItemInfo = dynamic(() => import("./VideoItemInfoBox"));
