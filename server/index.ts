@@ -51,6 +51,10 @@ server.get("*", (req: Request, res: Response, next: NextFunction) => {
 // api routes
 server.use("/api/video", videoRouter);
 
+server.get("/ip", (req: Request, res: Response) =>
+  res.json({ message: req.headers["x-forwarded-for"] })
+);
+
 server.get("/ping", (_req: Request, res: Response) => {
   res.status(200).json("pong");
 });
