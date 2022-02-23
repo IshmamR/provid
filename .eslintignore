@@ -6,3 +6,4 @@ dist/
 build/
 scripts/
 data/
+public/*.js
