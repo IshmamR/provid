@@ -129,6 +129,19 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
 
   const inputRef = useRef<Input>(null);
 
+  useEffect(() => {
+    inputRef.current?.focus();
+
+    if (navigator.clipboard?.readText) {
+      navigator.clipboard.readText().then((clipText) => {
+        if (regex.test(clipText)) {
+          setInput(clipText);
+          setSearchMode(false);
+        }
+      });
+    }
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement> | undefined) => {
     const value = e?.target.value;
     if (value && value.trim() !== "") {
@@ -144,18 +157,6 @@ const YTDownloadBlock: React.FC<IProps> = (props): JSX.Element => {
       setSearchMode(true);
     }
   };
-
-  useEffect(() => {
-    inputRef.current?.focus();
-
-    if (navigator.clipboard?.readText) {
-      navigator.clipboard.readText().then((clipText) => {
-        if (regex.test(clipText)) {
-          setInput(clipText);
-        }
-      });
-    }
-  }, []);
 
   /**
    * @on_submit_event_handler

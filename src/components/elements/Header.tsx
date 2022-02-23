@@ -63,7 +63,12 @@ const Header: React.FC = (
       <HeaderInner>
         <Link href={"/"}>
           <a>
-            <Logo src={"/images/header_logo_new.png"} alt="provid logo png" />
+            <Logo
+              src={"/images/header_logo_new.png"}
+              alt="provid logo png"
+              height="30px"
+              width="auto"
+            />
             <LogoText>PROVID</LogoText>
           </a>
         </Link>

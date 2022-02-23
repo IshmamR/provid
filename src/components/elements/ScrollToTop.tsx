@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import VerticalAlignTopOutlined from "@ant-design/icons/VerticalAlignTopOutlined";
 
-const AnchorToTop = styled.a`
+const AnchorToTop = styled.span`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,6 +16,7 @@ const AnchorToTop = styled.a`
   right: 30px;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.6), 0 1px 2px -1px rgba(0, 0, 0, 0.9);
   transition: all 0.5s ease;
+  cursor: pointer;
 
   .__back_to_top {
     font-size: 1.25rem;

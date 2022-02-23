@@ -12,7 +12,6 @@ const Home: NextPage = () => {
           name="description"
           content="Download your favorite youtube videos from any device for free!"
         />
-        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main}>

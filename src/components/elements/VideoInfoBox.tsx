@@ -163,7 +163,7 @@ const VideoInfo: React.FC<IProps> = ({
             &nbsp;
             <span title={info.uploader}>{info.uploader.slice(0, 12)}</span>
             &nbsp;&nbsp;
-            <a href={info.url} target="_blank" rel="noreferrer">
+            <a href={info.url || "/"} target="_blank" rel="noreferrer">
               <YoutubeOutlined className="video_url" />
             </a>
           </VideoTexts>
